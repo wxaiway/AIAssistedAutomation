@@ -29,3 +29,6 @@
 ## 联系方式
 
 如果有任何问题或反馈，欢迎随时打开一个issue或直接联系我们 [wxaiway@qq.com] 或 微信联系 [wxaiway]
+
+## 公众号
+![伟贤AI之路](images/mp.jpg)
