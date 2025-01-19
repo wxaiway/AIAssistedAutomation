@@ -3,7 +3,7 @@ import re
 import argparse
 
 def parse_txt_to_md(txt_content):
-    # 首先去除首尾的空白字符
+    # 去除首尾空白字符
     txt_content = txt_content.strip()
 
     # 初始化变量以避免未定义错误
@@ -44,10 +44,34 @@ def parse_txt_to_md(txt_content):
         else:
             body = txt_content
 
-    md_content = f"## Title\n\n{title or 'No title'}\n\n"
-    md_content += f"## Author\n\nWritten by {author}\n\n" if author else "## Author\n\nNo author information\n\n"
-    md_content += f"## Focus question\n\n{focus_question or 'No focus question'}\n\n"
-    md_content += f"## Body\n\n{body}"
+    # 拆分Body内容
+    connections_pattern = r'connections[\.\s]*writing'
+    connections_match = re.search(connections_pattern, body, re.IGNORECASE)
+    
+    if connections_match:
+        body_part = body[:connections_match.start()].strip()
+        rest_part = body[connections_match.end():].strip()
+
+        writing_social_studies_pattern = r'social\sstudies'
+        writing_social_studies_match = re.search(writing_social_studies_pattern, rest_part, re.IGNORECASE)
+
+        if writing_social_studies_match:
+            writing_part = rest_part[:writing_social_studies_match.start()].strip()
+            social_studies_part = rest_part[writing_social_studies_match.end():].strip()
+        else:
+            writing_part = rest_part
+            social_studies_part = ''
+    else:
+        body_part = body
+        writing_part = ''
+        social_studies_part = ''
+
+    md_content = f"## Title\n\n{title or ''}\n\n"
+    md_content += f"## Author\n\nWritten by {author}\n\n" if author else "## Author\n\n\n"
+    md_content += f"## Focus Question\n\n{focus_question or ''}\n\n"
+    md_content += f"## Body\n\n{body_part}\n\n" if body_part else ""
+    md_content += f"## Connections\n\n### Writing\n\n{writing_part}\n\n" if writing_part else ""
+    md_content += f"### Social Studies\n\n{social_studies_part}\n\n" if social_studies_part else ""
 
     return md_content
 
