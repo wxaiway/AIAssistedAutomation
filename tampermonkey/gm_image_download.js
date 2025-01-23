@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         下载即梦HD图片(webp/jpg)
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      1.2
 // @description  Collect and download specific image URLs containing aigc_resize:2400:2400 and labeled as '超清' from the page, with option to convert webp to jpg
 // @match        https://jimeng.jianying.com/*
 // @grant        GM_download
@@ -190,13 +190,25 @@
                 formatSelect.appendChild(option);
             });
 
+            // 添加单选框
+            const cleanupCheckbox = document.createElement('input');
+            cleanupCheckbox.type = 'checkbox';
+            cleanupCheckbox.id = 'cleanupCheckbox';
+            cleanupCheckbox.checked = true; // 默认勾选
+            cleanupCheckbox.style.marginRight = '5px';
+
+            const cleanupLabel = document.createElement('label');
+            cleanupLabel.htmlFor = 'cleanupCheckbox';
+            cleanupLabel.textContent = '下载完成后清理已收集的图片';
+
             const startDownloadBtn = this.createButton('开始下载', () => {
                 const prefix = prefixInput.value;
                 const startIndex = parseInt(startInput.value, 10) || 1;
                 const delay = parseInt(delayInput.value, 10) || 1000;
                 const format = formatSelect.value;
+                const cleanup = cleanupCheckbox.checked; // 获取单选框状态
                 dialog.remove();
-                this.downloadImages(prefix, startIndex, delay, format);
+                this.downloadImages(prefix, startIndex, delay, format, cleanup);
             });
             startDownloadBtn.style.width = '100%';
             startDownloadBtn.style.boxSizing = 'border-box';
@@ -210,13 +222,15 @@
             dialog.appendChild(startInput);
             dialog.appendChild(delayInput);
             dialog.appendChild(formatSelect);
+            dialog.appendChild(cleanupCheckbox); // 添加单选框
+            dialog.appendChild(cleanupLabel); // 添加单选框标签
             dialog.appendChild(startDownloadBtn);
             dialog.appendChild(cancelBtn);
 
             document.body.appendChild(dialog);
         }
 
-        downloadImages(prefix, startIndex, delay, format) {
+        downloadImages(prefix, startIndex, delay, format, cleanup) {
             if (this.isDownloading) {
                 this.showNotification('下载已在进行中');
                 return;
@@ -230,6 +244,10 @@
                     this.isDownloading = false;
                     this.showNotification(`全部 ${this.collectedUrls.length} 张图片下载完成`);
                     this.updateProgressIndicator(0, 1);
+                    if (cleanup) { // 根据单选框状态清理已收集的图片
+                        this.collectedUrls = [];
+                        this.updateDownloadButtonText();
+                    }
                     return;
                 }
 
