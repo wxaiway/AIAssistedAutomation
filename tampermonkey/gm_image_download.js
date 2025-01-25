@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         下载即梦HD图片(webp/jpg)
 // @namespace    http://tampermonkey.net/
-// @version      1.2
+// @version      1.3
 // @description  Collect and download specific image URLs containing aigc_resize:2400:2400 and labeled as '超清' from the page, with option to convert webp to jpg
 // @match        https://jimeng.jianying.com/*
 // @grant        GM_download
@@ -15,6 +15,7 @@
         constructor() {
             this.collectedUrls = [];
             this.downloadBtn = null;
+            this.collectBtn = null;
             this.isDownloading = false;
             this.progressBar = null;
         }
@@ -68,7 +69,7 @@
             `;
             panel.appendChild(dragHandle);
 
-            const collectBtn = this.createButton('重新收集图片', () => this.collectImages());
+            this.collectBtn = this.createButton('重新收集图片', () => this.collectImages());
             this.downloadBtn = this.createButton('批量下载(0)', () => this.showDownloadDialog());
 
             this.progressBar = document.createElement('div');
@@ -90,7 +91,7 @@
             this.progressBar.appendChild(progressInner);
 
             panel.appendChild(dragHandle);
-            panel.appendChild(collectBtn);
+            panel.appendChild(this.collectBtn);
             panel.appendChild(this.downloadBtn);
             panel.appendChild(this.progressBar);
 
@@ -103,8 +104,21 @@
             const button = document.createElement('button');
             button.textContent = text;
             button.style.marginRight = '5px';
-            button.addEventListener('click', onClick);
+            button.style.cursor = 'pointer';
+            button.style.opacity = '1';
+            button.disabled = false;
+            button.addEventListener('click', () => {
+                if (!button.disabled) {
+                    onClick();
+                }
+            });
             return button;
+        }
+
+        setButtonDisabled(button, disabled) {
+            button.disabled = disabled;
+            button.style.cursor = disabled ? 'not-allowed' : 'pointer';
+            button.style.opacity = disabled ? '0.6' : '1';
         }
 
         updateDownloadButtonText() {
@@ -237,11 +251,16 @@
             }
 
             this.isDownloading = true;
+            this.setButtonDisabled(this.collectBtn, true);
+            this.setButtonDisabled(this.downloadBtn, true);
+            
             let downloadedCount = 0;
 
             const downloadNext = (index) => {
                 if (index >= this.collectedUrls.length) {
                     this.isDownloading = false;
+                    this.setButtonDisabled(this.collectBtn, false);
+                    this.setButtonDisabled(this.downloadBtn, false);
                     this.showNotification(`全部 ${this.collectedUrls.length} 张图片下载完成`);
                     this.updateProgressIndicator(0, 1);
                     if (cleanup) { // 根据单选框状态清理已收集的图片

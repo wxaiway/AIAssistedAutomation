@@ -26,6 +26,6 @@ export DASHSCOPE_API_KEY=your_api_key_here
 ## 使用
 
 ```
-python AudioBatchTranscriber.py --input mp3_dir --output transcribed
+python audio_batch_transcriber.py --input mp3_dir --output transcribed
 ```
 
