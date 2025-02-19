@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         下载即梦HD图片(webp/jpg)
 // @namespace    http://tampermonkey.net/
-// @version      1.3
+// @version      1.4
 // @description  Collect and download specific image URLs containing aigc_resize:2400:2400 and labeled as '超清' from the page, with option to convert webp to jpg
 // @match        https://jimeng.jianying.com/*
 // @grant        GM_download
@@ -253,7 +253,7 @@
             this.isDownloading = true;
             this.setButtonDisabled(this.collectBtn, true);
             this.setButtonDisabled(this.downloadBtn, true);
-            
+
             let downloadedCount = 0;
 
             const downloadNext = (index) => {
@@ -346,7 +346,7 @@
                             if (node.nodeType === Node.ELEMENT_NODE) {
                                 const containers = node.querySelectorAll('.container-EdniD0');
                                 containers.forEach(container => {
-                                    const imgElement = container.querySelector('.image-mh68Se');
+                                    const imgElement = container.querySelector('.image-vEy3V8 .image-eM8rT1');
                                     const metaRightElements = container.querySelectorAll('.metaRight-fF8GZJ');
                                     const editSection = document.querySelector('.container-RBbKMJ');
                                     const disabledHDButton = editSection ? editSection.querySelector('.optItem-iyWnC2.disabled-R018rY') : null;
