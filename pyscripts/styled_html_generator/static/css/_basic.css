@@ -1,0 +1,181 @@
+/* 全局属性
+ * 页边距
+ * 全文字体 font-family: ptima-Regular;
+ * 英文换行 word-break: break-all;
+ */
+ #container {
+  padding: 30px;
+  font-family: ptima-RegularOptima-Regular, Optima, PingFangSC-light, PingFangTC-light, 'PingFang SC', Cambria, Cochin, Georgia, serif;
+  word-break: break-all;
+  line-height: 1.75;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+/* 一级标题 */
+#container h1 {
+  font-size: 1.8em;
+  margin: 1.2em auto;
+  text-align: center;
+}
+
+/* 二级标题 */
+h2 {
+  font-size: 1.4em;
+  margin: 2em auto;
+  padding-left: 6px;
+}
+
+/* 三级标题 */
+h3 {
+  font-weight: bold;
+  font-size: 1.2em;
+  margin: 1.8em auto;
+  line-height: 1.2;
+  padding-left: 8px;
+}
+
+/* 四级标题 */
+#container h4 {
+  margin: 0.8em auto;
+  font-size: 1.2em;
+  padding-left: 10px;
+}
+
+  /* 五级标题 */
+#container h5 {
+  margin: 0.6em auto;
+  font-size: 1.1em;
+  padding-left: 12px;
+}
+
+/* 段落 */
+#container p {
+  text-align: justify;
+  letter-spacing: .75px;
+  margin: 1.5em 8px;
+}
+
+/* 引用 */
+blockquote {
+  font-style: normal;
+  padding: .5em;
+  border-radius: 4px;
+  background: rgba(27,31,35,.05);
+  margin: 1em 5px
+}
+
+blockquote p {
+  letter-spacing: 0.1em;
+  font-size: 1em;
+  display: block;
+}
+
+
+/* 图片 */
+img {
+  width: 100% !important;
+  border-radius: 6px;
+  display: block;
+  margin: 20px auto;
+  object-fit: contain;
+  box-shadow:2px 4px 7px #999;
+}
+
+/* 无序列表 */
+ul {
+    margin-left: 1em;
+    padding-left: 1em;
+}
+
+/* 有序列表 */
+ol {
+  margin-left: 1em;
+  padding-left: 1em;
+}
+
+li {
+  padding-left: 4px;
+}
+
+/* 加粗 */
+strong {
+  font-weight: bold;
+}
+
+/* 链接 */
+a {
+  color: #444851;
+}
+
+/* 代码高亮 */
+#container pre code {
+  overflow-x: auto;
+  overflow: auto !important;
+  overflow-wrap: normal !important;
+  padding: 16px;
+  border-radius: 6px;
+  box-shadow:2px 4px 7px #999;
+  margin: 1em 0px;
+  word-break: normal !important;
+  display: -webkit-box !important;
+}
+
+
+code {
+  font-size: 13px;
+  font-family: 'Consolas', 'DejaVu Sans Mono', 'Bitstream Vera Sans Mono', monospace;
+}
+
+/* 行内代码 */
+#container p code, #container li code {
+  font-size: 14px;
+  background: #f8f5f3;
+  color: #343b4b;
+}
+
+
+/* 表格 */
+table {
+  border-collapse: collapse;
+  text-align: center;
+  margin: 8px 0;
+  width: 100%!important;
+}
+
+thead {
+  background: rgba(0, 0, 0, 0.05);
+  font-weight: bold;
+}
+
+td {
+  border: 1px solid #dfdfdf;
+  padding: 0.25em 0.5em;
+}
+
+.poem-line {
+    margin-bottom: 0.6em; /* 减小行间距 */
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end; /* 确保所有元素底部对齐 */
+}
+
+.char-wrapper {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    margin-right: 0.3em; /* 减小字符间距 */
+    min-width: 1em;
+}
+
+.pinyin {
+    font-size: 0.5em;
+    color: #666;
+    line-height: 1;
+    margin-bottom: 0.2em; /* 调整拼音和汉字之间的距离 */
+}
+
+.hanzi, .punctuation {
+    font-size: 1.2em;
+    line-height: 1;
+}
