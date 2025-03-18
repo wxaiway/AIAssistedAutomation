@@ -1,6 +1,7 @@
 # Private file
 pyscripts/run.sh
 .DS_Store
+logs/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
