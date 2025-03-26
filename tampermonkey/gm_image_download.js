@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         下载即梦HD图片(webp/jpg)
 // @namespace    http://tampermonkey.net/
-// @version      1.4
+// @version      1.5
 // @description  Collect and download specific image URLs containing aigc_resize:2400:2400 and labeled as '超清' from the page, with option to convert webp to jpg
 // @match        https://jimeng.jianying.com/*
 // @grant        GM_download
@@ -344,15 +344,19 @@
                     if (mutation.type === 'childList') {
                         mutation.addedNodes.forEach((node) => {
                             if (node.nodeType === Node.ELEMENT_NODE) {
-                                const containers = node.querySelectorAll('.container-EdniD0');
+                                // 查找图片容器
+                                const containers = node.querySelectorAll('.container-tHvhRb');
                                 containers.forEach(container => {
-                                    const imgElement = container.querySelector('.image-vEy3V8 .image-eM8rT1');
-                                    const metaRightElements = container.querySelectorAll('.metaRight-fF8GZJ');
-                                    const editSection = document.querySelector('.container-RBbKMJ');
-                                    const disabledHDButton = editSection ? editSection.querySelector('.optItem-iyWnC2.disabled-R018rY') : null;
+                                    // 获取图片元素
+                                    const imgElement = container.querySelector('.image-XwnYDB');
+                                    // 获取高清标志
+                                    const metaRightElements = document.querySelectorAll('.metaRight-ZTXP84');
+                                    const editSection = document.querySelector('.topActionBar-FcDJq_');
+                                    const disabledHDButton = editSection ? editSection.querySelector('.mweb-button-tertiary.disabled-R018rY') : null;
 
                                     let isHD = false;
 
+                                    // 检查是否为高清图片
                                     for (const metaRight of metaRightElements) {
                                         if (metaRight.textContent.trim() === '超清') {
                                             isHD = true;
@@ -360,6 +364,7 @@
                                         }
                                     }
 
+                                    // 如果没有找到高清标志，检查按钮状态
                                     if (!isHD && disabledHDButton) {
                                         const buttonText = disabledHDButton.textContent.trim();
                                         if (buttonText === '超清') {
@@ -367,10 +372,11 @@
                                         }
                                     }
 
+                                    // 如果是高清图片，收集图片 URL
                                     if (isHD) {
                                         let url = this.getImageUrl(imgElement);
                                         if (url && !this.collectedUrls.some(item => item.url === url)) {
-                                            this.collectedUrls.push({url: url, element: imgElement});
+                                            this.collectedUrls.push({ url: url, element: imgElement });
                                             console.log('收集新加载图片URL:', url);
                                             this.updateDownloadButtonText();
                                         }
@@ -384,6 +390,7 @@
 
             observer.observe(document.body, { childList: true, subtree: true });
         }
+
 
         makeDraggable(element, handle) {
             let isDragging = false;

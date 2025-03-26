@@ -1,14 +1,14 @@
-# PDF 处理工具教程
+## 公众号
 
-## 简介
-这是一个功能强大的 PDF 处理工具，可以执行多种操作，包括处理 PDF 页面、合并 PDF、提取图片、加密和解密 PDF 文件。
+伟贤AI之路
+
+![伟贤AI之路](../images/mp.jpg)
+
+## 文章介绍
+
+[用 PyMuPDF 和 Pillow 打造 PDF 超级工具](https://mp.weixin.qq.com/s/KH-okJlXSzDFeuJcRPgwjw)
 
 ## 依赖库
-要使用这个工具，您需要安装以下 Python 库：
-PyMuPDF (fitz)
-Pillow (PIL)
-
-您可以使用以下命令安装这些库：
 
 ```
 pip install PyMuPDF Pillow
