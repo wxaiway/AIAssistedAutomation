@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         下载即梦HD图片(webp/jpg)
 // @namespace    http://tampermonkey.net/
-// @version      1.5
+// @version      1.6
 // @description  Collect and download specific image URLs containing aigc_resize:2400:2400 and labeled as '超清' from the page, with option to convert webp to jpg
 // @match        https://jimeng.jianying.com/*
 // @grant        GM_download
@@ -129,36 +129,26 @@
 
         collectImages() {
             this.collectedUrls = [];
-            document.querySelectorAll('.container-EdniD0').forEach(container => {
-                const imgElement = container.querySelector('.image-mh68Se');
-                const metaRightElements = container.querySelectorAll('.metaRight-fF8GZJ');
-                const editSection = document.querySelector('.container-RBbKMJ');
-                const disabledHDButton = editSection ? editSection.querySelector('.optItem-iyWnC2.disabled-R018rY') : null;
 
-                let isHD = false;
+            // 查找所有图片容器
+            document.querySelectorAll('[class*="container-"]').forEach(container => {
+                // 获取图片元素
+                const imgElement = container.querySelector('img');
+                if (!imgElement) return;
 
-                for (const metaRight of metaRightElements) {
-                    if (metaRight.textContent.trim() === '超清') {
-                        isHD = true;
-                        break;
-                    }
-                }
+                // 检查是否为高清图片
+                const isHD = this.isHighDefinition();
 
-                if (!isHD && disabledHDButton) {
-                    const buttonText = disabledHDButton.textContent.trim();
-                    if (buttonText === '超清') {
-                        isHD = true;
-                    }
-                }
-
+                // 如果是高清图片，收集图片 URL
                 if (isHD) {
                     let url = this.getImageUrl(imgElement);
-                    if (url && !this.collectedUrls.includes(url)) {
-                        this.collectedUrls.push({url: url, element: imgElement});
+                    if (url && !this.collectedUrls.some(item => item.url === url)) {
+                        this.collectedUrls.push({ url: url, element: imgElement });
                         console.log('收集图片URL:', url);
                     }
                 }
             });
+
             this.showNotification(`已重新收集 ${this.collectedUrls.length} 个符合条件的图片URL`);
             this.updateDownloadButtonText();
         }
@@ -345,32 +335,14 @@
                         mutation.addedNodes.forEach((node) => {
                             if (node.nodeType === Node.ELEMENT_NODE) {
                                 // 查找图片容器
-                                const containers = node.querySelectorAll('.container-tHvhRb');
+                                const containers = node.querySelectorAll('[class*="container-"]');
                                 containers.forEach(container => {
                                     // 获取图片元素
-                                    const imgElement = container.querySelector('.image-XwnYDB');
-                                    // 获取高清标志
-                                    const metaRightElements = document.querySelectorAll('.metaRight-ZTXP84');
-                                    const editSection = document.querySelector('.topActionBar-FcDJq_');
-                                    const disabledHDButton = editSection ? editSection.querySelector('.mweb-button-tertiary.disabled-R018rY') : null;
-
-                                    let isHD = false;
+                                    const imgElement = this.findImageElement(container);
+                                    if (!imgElement) return;
 
                                     // 检查是否为高清图片
-                                    for (const metaRight of metaRightElements) {
-                                        if (metaRight.textContent.trim() === '超清') {
-                                            isHD = true;
-                                            break;
-                                        }
-                                    }
-
-                                    // 如果没有找到高清标志，检查按钮状态
-                                    if (!isHD && disabledHDButton) {
-                                        const buttonText = disabledHDButton.textContent.trim();
-                                        if (buttonText === '超清') {
-                                            isHD = true;
-                                        }
-                                    }
+                                    const isHD = this.isHighDefinition();
 
                                     // 如果是高清图片，收集图片 URL
                                     if (isHD) {
@@ -391,6 +363,49 @@
             observer.observe(document.body, { childList: true, subtree: true });
         }
 
+        // 辅助函数：查找图片元素
+        findImageElement(container) {
+            const imgElement = container.querySelector('img');
+            return imgElement || null;
+        }
+
+        // 辅助函数：获取图片的真实 URL
+        getImageUrl(imgElement) {
+            if (imgElement && imgElement.src) {
+                return imgElement.src.split('?')[0]; // 去掉 URL 中的查询参数
+            }
+            return null;
+        }
+
+        // 辅助函数：判断是否为高清图片
+        isHighDefinition() {
+            // 1. 检查是否有“超清”标志
+            const metaRightElements = document.querySelectorAll('[class*="metaRight-"], [class*="metaRight_"]');
+            for (const metaRight of metaRightElements) {
+                if (metaRight.textContent.trim() === '超清') {
+                    return true; // 如果找到“超清”标志，直接返回 true
+                }
+            }
+
+            // 2. 如果没有找到标志，检查灰化的“超清”按钮
+            const editSections = document.querySelectorAll('[class^="group-"], [class^="topActionBar-"]');
+            for (const editSection of editSections) {
+                // 查找所有按钮
+                const buttons = editSection.querySelectorAll('[class^="optItem-"], [class^="mweb-button-"]');
+                for (const button of buttons) {
+                    // 检查按钮是否包含“超清”文本
+                    if (button.textContent.trim() === '超清') {
+                        // 动态匹配以 `disabled-` 开头的类名，判断按钮是否被禁用（灰化）
+                        const isDisabled = Array.from(button.classList).some(cls => cls.startsWith('disabled-'));
+                        if (isDisabled) {
+                            return true; // 如果按钮被禁用（灰化），返回 true
+                        }
+                    }
+                }
+            }
+
+            return false; // 如果既没有找到标志，也没有找到禁用的按钮，返回 false
+        }
 
         makeDraggable(element, handle) {
             let isDragging = false;
