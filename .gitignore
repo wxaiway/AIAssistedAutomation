@@ -1,5 +1,6 @@
 # Private file
 pyscripts/run.sh
+pyscripts/project_analysis.txt
 .DS_Store
 logs/
 
