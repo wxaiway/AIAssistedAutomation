@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown Converter</title>
+    <script>
+    MathJax = {
+        options: {
+            renderActions: {
+                addMenu: [0, '', '']
+            },
+            menuOptions: {
+                settings: {
+                    zoom: "None",
+                    zscale: "200%",
+                    renderer: "SVG",
+                }
+            }
+        }
+    };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            width: 1200px;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+	h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .editor-preview-container {
+            display: flex;
+            justify-content: space-between;
+            flex-grow: 1;
+            margin-bottom: 20px;
+        }
+        #editor, #preview {
+            width: 48%;
+            height: calc(100vh - 100px);
+            border: 1px solid #ccc;
+            padding: 10px;
+            overflow: auto;
+            box-sizing: border-box;
+        }
+        #preview {
+            background-color: #f9f9f9;
+            overflow-x: auto;
+        }
+        .button-group {
+            margin-bottom: 10px;
+        }
+        button {
+            margin-right: 10px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        .MathJax {
+            display: inline-block !important;
+            max-width: 100%;
+            overflow-x: auto;
+        }
+        .copyright {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.8em;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Markdown 转成 Word</h1>
+        <div class="button-group">
+            <button id="convertMathBtn">Convert Math Format</button>
+            <button id="copyMarkdownBtn">Copy Markdown</button>
+            <button id="exportWordBtn">Export to Word</button>
+            <button id="exportHtmlBtn">Export to HTML</button>
+        </div>
+        <div class="editor-preview-container">
+            <textarea id="editor" placeholder="Enter your Markdown here..."></textarea>
+            <div id="preview"></div>
+        </div>
+        <div class="copyright">
+            © 2025 Markdown Converter. All rights reserved.
+        </div>
+    </div>
+
+    <script>
+        const editor = document.getElementById('editor');
+        const preview = document.getElementById('preview');
+
+        editor.addEventListener('input', debounce(updatePreview, 300));
+
+        document.getElementById('convertMathBtn').addEventListener('click', convertMathFormat);
+        document.getElementById('copyMarkdownBtn').addEventListener('click', copyMarkdown);
+        document.getElementById('exportWordBtn').addEventListener('click', () => exportDocument('docx'));
+        document.getElementById('exportHtmlBtn').addEventListener('click', () => exportDocument('html'));
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        function updatePreview() {
+            const markdown = editor.value;
+            fetch('/preview', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ markdown }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                preview.innerHTML = data.html;
+                if (window.MathJax) {
+                    MathJax.typesetPromise([preview]).then(() => {
+                        preview.style.width = '48%';
+                    });
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function convertMathFormat() {
+            const markdown = editor.value;
+            fetch('/convert_math', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ markdown }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                editor.value = data.converted_markdown;
+                updatePreview();
+            })
+            .catch(error => console.error('Error converting math format:', error));
+        }
+
+        function copyMarkdown() {
+            navigator.clipboard.writeText(editor.value)
+                .then(() => alert('Markdown copied to clipboard!'))
+                .catch(err => console.error('Could not copy text: ', err));
+        }
+
+        function exportDocument(format) {
+            const markdown = editor.value;
+            fetch('/export', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ markdown, format }),
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw err; });
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `document.${format}`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert(`Export failed: ${error.error || 'Unknown error'}`);
+            });
+        }
+    </script>
+</body>
+</html>

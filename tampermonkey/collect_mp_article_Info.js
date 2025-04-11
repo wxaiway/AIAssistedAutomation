@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         微信公众号文章收集器
+// @name         公众号文章链接收集器
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.1
 // @description  收集微信公众号文章链接，提供可视化界面和下载功能，支持收集指定日期后的文章
 // @match        https://mp.weixin.qq.com/*action=edit*
 // @grant        GM_download
@@ -10,11 +10,40 @@
 (function() {
     'use strict';
 
-    let allArticleInfo = [];
     let isCollecting = false;
     let currentPage = 1;
     let totalPages = 1;
     let startDate = null;
+
+    const storage = {
+        save: (value) => {
+            try {
+                localStorage.setItem('collectedArticles', JSON.stringify(value));
+                return true;
+            } catch (error) {
+                console.error('Error saving to localStorage:', error);
+                return false;
+            }
+        },
+        load: () => {
+            try {
+                const value = localStorage.getItem('collectedArticles');
+                return value ? JSON.parse(value) : [];
+            } catch (error) {
+                console.error('Error loading from localStorage:', error);
+                return [];
+            }
+        },
+        clear: () => {
+            try {
+                localStorage.removeItem('collectedArticles');
+                return true;
+            } catch (error) {
+                console.error('Error clearing localStorage:', error);
+                return false;
+            }
+        }
+    };
 
     function getAccountName() {
         const accountElement = document.querySelector('.inner_link_account_msg');
@@ -68,6 +97,7 @@
             <button id="stop-collect" class="collector-btn" style="display:none;">停止收集</button>
             <p id="collect-status" style="margin: 10px 0;"></p>
             <button id="download-csv" class="collector-btn" disabled>下载CSV</button>
+            <button id="clear-data" class="collector-btn">清理数据</button>
         `;
 
         const style = document.createElement('style');
@@ -111,6 +141,7 @@
         document.getElementById('start-collect').addEventListener('click', startCollection);
         document.getElementById('stop-collect').addEventListener('click', stopCollection);
         document.getElementById('download-csv').addEventListener('click', downloadCSV);
+        document.getElementById('clear-data').addEventListener('click', clearCollectedData);
 
         // 定期检查是否有可收集的文章
         setInterval(checkForArticles, 1000);
@@ -119,11 +150,13 @@
     function checkForArticles() {
         const articles = document.querySelectorAll('.inner_link_article_item');
         const startCollectBtn = document.getElementById('start-collect');
+        const downloadCsvBtn = document.getElementById('download-csv');
         if (articles.length > 0 && !isCollecting) {
             startCollectBtn.disabled = false;
         } else {
             startCollectBtn.disabled = true;
         }
+        downloadCsvBtn.disabled = storage.load().length === 0;
     }
 
     function updateAccountName() {
@@ -136,7 +169,6 @@
     function startCollection() {
         if (isCollecting) return;
         isCollecting = true;
-        allArticleInfo = [];
         currentPage = 1;
         startDate = document.getElementById('start-date').value ? new Date(document.getElementById('start-date').value) : null;
         updateButtonStates(true);
@@ -148,18 +180,18 @@
     function stopCollection() {
         isCollecting = false;
         updateButtonStates(false);
-        const collectedCount = allArticleInfo.length;
-        document.getElementById('collect-status').textContent = `收集已停止，已收集 ${collectedCount} 篇文章`;
-        console.log(`收集已停止，总共收集到 ${collectedCount} 篇文章信息`);
-        if (collectedCount > 0) {
-            console.log(allArticleInfo.join('\n'));
+        const collectedArticles = storage.load();
+        document.getElementById('collect-status').textContent = `收集已停止，已收集 ${collectedArticles.length} 篇文章`;
+        console.log(`收集已停止，总共收集到 ${collectedArticles.length} 篇文章信息`);
+        if (collectedArticles.length > 0) {
+            console.log(collectedArticles.join('\n'));
         }
     }
 
     function updateButtonStates(collecting) {
         document.getElementById('start-collect').style.display = collecting ? 'none' : 'inline-block';
         document.getElementById('stop-collect').style.display = collecting ? 'inline-block' : 'none';
-        document.getElementById('download-csv').disabled = allArticleInfo.length === 0;
+        document.getElementById('download-csv').disabled = storage.load().length === 0;
 
         if (!collecting) {
             checkForArticles(); // 在停止收集后重新检查是否有可收集的文章
@@ -177,6 +209,7 @@
         }
 
         let shouldContinue = true;
+        let collectedArticles = storage.load();
 
         articles.forEach(article => {
             if (!shouldContinue) return;
@@ -191,8 +224,10 @@
                 return;
             }
 
-            allArticleInfo.push(`${title}|${url}|${dateStr}`);
+            collectedArticles.push(`${title}|${url}|${dateStr}`);
         });
+
+        storage.save(collectedArticles);
 
         // 获取总页数
         const paginationLabel = document.querySelector('.weui-desktop-pagination__num__wrp');
@@ -226,9 +261,10 @@
     function finishCollection() {
         isCollecting = false;
         updateButtonStates(false);
-        document.getElementById('collect-status').textContent = `收集完成，共 ${allArticleInfo.length} 篇文章`;
-        console.log(`总共收集到 ${allArticleInfo.length} 篇文章信息`);
-        console.log(allArticleInfo.join('\n'));
+        const collectedArticles = storage.load();
+        document.getElementById('collect-status').textContent = `收集完成，共 ${collectedArticles.length} 篇文章`;
+        console.log(`总共收集到 ${collectedArticles.length} 篇文章信息`);
+        console.log(collectedArticles.join('\n'));
     }
 
     function downloadCSV() {
@@ -236,8 +272,9 @@
         const currentDate = new Date().toISOString().split('T')[0];
         const fileName = `${accountName}_${currentDate}.csv`;
 
+        const collectedArticles = storage.load();
         const csvContent = "公众号,标题,链接,日期\n"
-        + allArticleInfo.map(info => {
+        + collectedArticles.map(info => {
             const [title, url, date] = info.split('|');
             return `"${accountName}","${title}","${url}","${date}"`;
         }).join("\n");
@@ -257,6 +294,14 @@
                 URL.revokeObjectURL(url);
             }
         });
+    }
+
+    function clearCollectedData() {
+        if (confirm('确定要清除所有收集的数据吗？')) {
+            storage.clear();
+            document.getElementById('collect-status').textContent = '数据已清除';
+            updateButtonStates(false);
+        }
     }
 
     window.addEventListener('load', createUI);
