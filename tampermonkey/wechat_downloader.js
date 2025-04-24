@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         公众号文章下载器
 // @namespace    http://tampermonkey.net/
-// @version      1.0
-// @description  下载微信文章为Markdown格式，包括图片，并定期检查收集的文章列表
+// @version      1.2
+// @description  下载微信文章为Markdown格式，包括图片，兼容新版链接收集器数据结构
 // @match        https://mp.weixin.qq.com/*
 // @grant        GM_xmlhttpRequest
 // @grant        GM_download
@@ -18,7 +18,14 @@
 
     // 创建UI
     function createUI() {
-        const collectorUI = document.getElementById('article-collector');
+        const collectorUI = document.getElementById('article-collector-safe') || document.getElementById('article-collector');
+        const existingDownloader = document.getElementById('article-downloader');
+
+        // 如果下载器已存在，先移除
+        if (existingDownloader) {
+            existingDownloader.remove();
+        }
+
         const uiContainer = document.createElement('div');
         uiContainer.id = 'article-downloader';
 
@@ -26,8 +33,10 @@
         let width = '300px';
 
         if (collectorUI) {
-            topPosition = `${collectorUI.offsetTop + collectorUI.offsetHeight + 40}px`;
-            width = `${collectorUI.offsetWidth}px`;
+            // 计算位置，放在收集器下方20px处
+            const collectorRect = collectorUI.getBoundingClientRect();
+            topPosition = `${collectorRect.bottom + window.scrollY + 20}px`;
+            width = `${collectorRect.width}px`;
         }
 
         uiContainer.style.cssText = `
@@ -40,22 +49,35 @@
             z-index: 10000;
             font-family: Arial, sans-serif;
             width: ${width};
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-sizing: border-box;
         `;
 
-        const collectedArticles = JSON.parse(localStorage.getItem('collectedArticles') || '[]');
+        // 获取收集的文章数据（兼容新旧格式）
+        const storedData = JSON.parse(localStorage.getItem('collectedArticles') || '{"articles":[]}');
+        let collectedArticles = [];
+
+        if (Array.isArray(storedData)) {
+            // 旧格式：直接是文章数组
+            collectedArticles = storedData;
+        } else if (storedData.articles && Array.isArray(storedData.articles)) {
+            // 新格式：包含在articles属性中
+            collectedArticles = storedData.articles;
+        }
+
         const hasCollectedArticles = collectedArticles.length > 0;
 
         uiContainer.innerHTML = `
             <h3 style="margin-top: 0; margin-bottom: 10px;">公众号文章下载器</h3>
             ${hasCollectedArticles ? `
-                <div>
+                <div style="margin-bottom: 10px;">
                     <input type="checkbox" id="use-collected-articles">
                     <label for="use-collected-articles">使用已收集的 <span id="collected-count">${collectedArticles.length}</span> 篇文章</label>
                 </div>
             ` : ''}
-            <textarea id="article-urls" rows="5" style="width: 100%; margin-bottom: 10px;" placeholder="输入文章URL，每行一个"></textarea>
+            <textarea id="article-urls" rows="5" style="width: 100%; margin-bottom: 10px; padding: 8px; box-sizing: border-box;" placeholder="输入文章URL，每行一个"></textarea>
             <button id="download-articles" class="downloader-btn">下载文章</button>
-            <p id="download-status" style="margin: 10px 0;"></p>
+            <p id="download-status" style="margin: 10px 0; font-size: 14px; min-height: 20px;"></p>
         `;
 
         const style = document.createElement('style');
@@ -79,6 +101,15 @@
             .downloader-btn:hover {
                 background-color: #06AD56;
             }
+            .downloader-btn:disabled {
+                background-color: #cccccc;
+                cursor: not-allowed;
+            }
+            #article-downloader label {
+                font-size: 14px;
+                cursor: pointer;
+                user-select: none;
+            }
         `;
 
         document.head.appendChild(style);
@@ -90,7 +121,20 @@
             document.getElementById('use-collected-articles').addEventListener('change', function() {
                 const textarea = document.getElementById('article-urls');
                 if (this.checked) {
-                    textarea.value = collectedArticles.map(article => article.split('|')[1]).join('\n');
+                    // 从收集的文章中提取URL（兼容多种格式）
+                    textarea.value = collectedArticles.map(article => {
+                        // 如果是字符串且包含|分隔符
+                        if (typeof article === 'string' && article.includes('|')) {
+                            const parts = article.split('|');
+                            return parts.length > 1 ? parts[1] : article;
+                        }
+                        // 如果是对象且有url属性
+                        else if (typeof article === 'object' && article.url) {
+                            return article.url;
+                        }
+                        // 其他情况直接返回
+                        return article;
+                    }).filter(url => url).join('\n');
                 } else {
                     textarea.value = '';
                 }
@@ -112,7 +156,16 @@
 
     // 检查收集的文章
     function checkCollectedArticles() {
-        const collectedArticles = JSON.parse(localStorage.getItem('collectedArticles') || '[]');
+        // 获取收集的文章数据（兼容新旧格式）
+        const storedData = JSON.parse(localStorage.getItem('collectedArticles') || '{"articles":[]}');
+        let collectedArticles = [];
+
+        if (Array.isArray(storedData)) {
+            collectedArticles = storedData;
+        } else if (storedData.articles && Array.isArray(storedData.articles)) {
+            collectedArticles = storedData.articles;
+        }
+
         const countElement = document.getElementById('collected-count');
         const useCollectedCheckbox = document.getElementById('use-collected-articles');
 
@@ -122,7 +175,17 @@
 
         if (useCollectedCheckbox && useCollectedCheckbox.checked) {
             const textarea = document.getElementById('article-urls');
-            textarea.value = collectedArticles.map(article => article.split('|')[1]).join('\n');
+            textarea.value = collectedArticles.map(article => {
+                // 处理不同格式的文章数据
+                if (typeof article === 'string' && article.includes('|')) {
+                    const parts = article.split('|');
+                    return parts.length > 1 ? parts[1] : article;
+                }
+                else if (typeof article === 'object' && article.url) {
+                    return article.url;
+                }
+                return article;
+            }).filter(url => url).join('\n');
         }
     }
 
@@ -155,8 +218,13 @@
                 break;
             }
 
-            const url = urls[i].trim();
+            let url = urls[i].trim();
             if (!url) continue;
+
+            // 处理URL，确保是有效的文章链接
+            if (!url.startsWith('http')) {
+                url = 'https://mp.weixin.qq.com' + (url.startsWith('/') ? '' : '/') + url;
+            }
 
             statusElement.textContent = `正在处理第 ${i + 1}/${urls.length} 篇文章...`;
 
@@ -313,5 +381,31 @@
     }
 
     // 在页面加载完成后创建UI
-    window.addEventListener('load', createUI);
+    function init() {
+        // 等待页面稳定后再创建UI
+        setTimeout(() => {
+            createUI();
+
+            // 添加监听器，当收集器位置变化时调整下载器位置
+            const observer = new MutationObserver(() => {
+                const collectorUI = document.getElementById('article-collector-safe') || document.getElementById('article-collector');
+                const downloaderUI = document.getElementById('article-downloader');
+
+                if (collectorUI && downloaderUI) {
+                    const collectorRect = collectorUI.getBoundingClientRect();
+                    downloaderUI.style.top = `${collectorRect.bottom + window.scrollY + 20}px`;
+                    downloaderUI.style.width = `${collectorRect.width}px`;
+                }
+            });
+
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: ['style']
+            });
+        }, 1500);
+    }
+
+    window.addEventListener('load', init);
 })();

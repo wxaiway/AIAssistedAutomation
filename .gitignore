@@ -2,6 +2,7 @@
 pyscripts/run.sh
 pyscripts/project_analysis.txt
 .DS_Store
+.idea
 logs/
 
 # Byte-compiled / optimized / DLL files

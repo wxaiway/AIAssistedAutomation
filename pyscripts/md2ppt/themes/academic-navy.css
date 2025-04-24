@@ -1,0 +1,306 @@
+/* @theme academic-navy */
+
+@charset "UTF-8";
+@import 'uncover';
+@import 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/base16/github.min.css';
+
+:root {
+  --primary-color: #003f88;
+  --secondary-color: #4a7eb8;
+  --tertiary-color: #7b9fc8;
+  --text-color: #3d3d40;
+  --light-text-color: #fff;
+  --muted-text-color: #999;
+  --background-color: #fff;
+  --alt-background-color: #003f88;
+  --font-size: 25px;
+  --h1-font-size: 68px;
+  --h2-font-size: 60px;
+  --h3-font-size: 36px;
+  --header-font-size: 36px;
+  --footer-font-size: 21px;
+}
+
+@font-face {
+  font-family: "aliRegular";
+  font-weight: 400;
+  src: url("//at.alicdn.com/wf/webfont/Kbjx2QR2mRB8/Skgx5yYpL6q1.woff2") format("woff2"),
+       url("//at.alicdn.com/wf/webfont/Kbjx2QR2mRB8/AXcCnvbk4CXu.woff") format("woff");
+  font-display: swap;
+}
+
+section {
+  font-size: var(--font-size);
+  text-align: left;
+  font-family: aliRegular, Arial, Helvetica, sans-serif;
+  position: relative;
+  background-color: var(--background-color);
+  color: var(--text-color);
+}
+
+a, h1, h2, h3 { color: var(--primary-color); }
+
+h1 {
+  padding: 0;
+  font-size: var(--h1-font-size);
+}
+
+h2 {
+  margin: 0;
+  font-size: var(--h2-font-size);
+}
+
+h3 {
+  font-size: var(--h3-font-size);
+  text-align: left;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  position: relative;
+  padding-left: 16px;
+}
+
+h3::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 30px;
+  background-color: var(--primary-color);
+}
+
+h5 {
+  color: #595959;
+  padding: 0;
+  margin: 5px 0;
+  font-weight: 400;
+}
+
+h6 {
+  color: #595959;
+  font-weight: 400;
+  margin: 0 0 10px;
+  text-decoration: underline;
+  font-style: oblique;
+}
+
+marp-pre {
+  filter: none;
+}
+
+code {
+  box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+  border-radius: 5px;
+}
+
+/* Header */
+section header {
+  left: 0;
+  top: 0;
+  padding: 12px 0 12px 30px;
+  width: 100%;
+  background-image: url("images/academic-navy/bg.png");
+  background-repeat: no-repeat;
+  background-size: 100% auto;
+  text-align: left;
+  color: var(--light-text-color);
+  font-size: var(--header-font-size);
+  text-shadow: none;
+}
+
+section header::after {
+  content: '';
+  height: 50px;
+  width: 250px;
+  position: absolute;
+  right: 60px;
+  top: 12px;
+  background-image: url("images/academic-navy/logo.png");
+  background-position: right top;
+  background-repeat: no-repeat;
+  background-size: auto 100%;
+}
+
+/* Footer */
+section footer {
+  color: var(--muted-text-color);
+  bottom: 2px;
+  font-size: var(--footer-font-size);
+  text-align: center;
+}
+
+section footer a {
+  color: #ccc;
+  transition: all 0.3s;
+}
+
+section footer a:hover {
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+/* Page number */
+section::after {
+  font-size: 24px;
+  font-weight: bold;
+  background: linear-gradient(-45deg, var(--primary-color) 44%, var(--secondary-color) 44%, var(--tertiary-color) 48%, transparent 48%);
+  text-shadow: none;
+  color: var(--light-text-color);
+  padding: 30px 15px 15px 30px;
+  text-align: right;
+}
+
+/* Table styles */
+table thead {
+  background-color: #004da1;
+  color: var(--light-text-color);
+  line-height: 50px;
+}
+
+table tbody tr {
+  background-color: transparent;
+  color: #595959;
+}
+
+table tbody tr:nth-of-type(2n) {
+  background-color: rgba(166, 166, 166, 0.1);
+}
+
+table > tbody > tr:not(:last-child) > td {
+  min-width: 140px;
+  border-bottom: 1px solid #ddd;
+}
+
+/* Layout classes */
+section.horizontalImages p {
+  display: flex;
+  justify-content: center;
+}
+
+section.horizontalLayout {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Home page */
+section.homePage {
+  text-align: center;
+  justify-content: flex-start;
+  background: var(--alt-background-color);
+  color: #eee;
+  padding: 90px 0 0 0;
+}
+
+section.homePage::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url("images/academic-navy/cover_bg_4.jpg");
+  background-size: 100% auto;
+  background-position: 100% top;
+  background-repeat: no-repeat;
+  filter: contrast(0.3) brightness(1.7);
+  z-index: -1;
+  opacity: 0.8;
+}
+
+section.homePage h1 {
+  color: var(--light-text-color);
+  background: #003f88d8;
+  line-height: 170px;
+}
+
+section.homePage h2 {
+  color: var(--light-text-color);
+}
+
+/* Contents page */
+section.contents {
+  text-align: center;
+  color: var(--light-text-color);
+  padding: 0 0 0 40%;
+  background-color: var(--alt-background-color);
+}
+
+section.contents::before {
+  content: '';
+  position: absolute;
+  left: -10px;
+  top: -10px;
+  width: 40%;
+  height: 110%;
+  background-image: url("images/academic-navy/left_bg_0.jpg");
+  background-size: auto 100%;
+  background-repeat: no-repeat;
+  z-index: -1;
+  border-radius: 0 55% 55% 0;
+  opacity: 1;
+  border: 10px solid rgb(40, 113, 196);
+  border-width: 10px 50px 50px 10px;
+  box-shadow: #97abd14d 5px 0px 20px 5px;
+}
+
+section.contents h2 {
+  color: #ffffffdc;
+  position: relative;
+  margin-bottom: 40px;
+}
+
+section.contents h2::before {
+  content: 'CONTENTS';
+  position: absolute;
+  bottom: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 60px;
+  opacity: 0.1;
+  z-index: 1;
+}
+
+section.contents ul {
+  font-size: 23px;
+}
+
+section.contents ul li {
+  color: var(--light-text-color);
+  line-height: 40px;
+  list-style: none;
+  position: relative;
+}
+
+section.contents ul li strong {
+  font-size: 50px;
+  line-height: 60px;
+  background-image: -webkit-linear-gradient(105deg, transparent, #e7efff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 2px 2px 20px #0000000d;
+  vertical-align: middle;
+  margin-right: 20px;
+}
+
+/* Thanks page */
+section.thanksPage {
+  text-align: center;
+  justify-content: flex-end;
+  padding-bottom: 100px;
+  background-image: url("images/academic-navy/ink_bg.jpg");
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-size: 100% auto;
+}
+
+/* Content page */
+section.contentPage {
+  background: linear-gradient(-10deg, #c5d2e3, #fff);
+}
+
+section.contentPage img {
+  margin: 5px;
+}

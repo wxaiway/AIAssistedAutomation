@@ -1,0 +1,292 @@
+o/* @theme corporate-sky */
+
+@charset "UTF-8";
+@import 'uncover';
+@import 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/base16/github.min.css';
+
+:root {
+  --primary-color: #1673ed;
+  --secondary-color: #4c98ff;
+  --text-color: #3d3d40;
+  --background-gradient: linear-gradient(10deg, #ebf3ff, #fff);
+  --muted-text-color: #999;
+  --light-text-color: #fff;
+  --font-size: 25px;
+  --h1-font-size: 68px;
+  --h2-font-size: 60px;
+  --h3-font-size: 36px;
+  --h4-font-size: 30px;
+  --header-font-size: 40px;
+  --footer-font-size: 21px;
+}
+
+@font-face {
+  font-family: "aliRegular";
+  font-weight: 400;
+  src: url("//at.alicdn.com/wf/webfont/Kbjx2QR2mRB8/Skgx5yYpL6q1.woff2") format("woff2"),
+       url("//at.alicdn.com/wf/webfont/Kbjx2QR2mRB8/AXcCnvbk4CXu.woff") format("woff");
+  font-display: swap;
+}
+
+section {
+  font-size: var(--font-size);
+  text-align: left;
+  font-family: aliRegular, Arial, Helvetica, sans-serif;
+  position: relative;
+  background: var(--background-gradient);
+  color: var(--text-color);
+}
+
+a, h1, h2, h3 { color: var(--primary-color); }
+
+h1 {
+  padding: 0;
+  font-size: var(--h1-font-size);
+}
+
+h2 {
+  text-align: left;
+  margin: 0;
+  font-size: var(--h2-font-size);
+}
+
+h3 {
+  font-size: var(--h3-font-size);
+  text-align: left;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  position: relative;
+  padding-left: 16px;
+}
+
+h3::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 30px;
+  background-color: var(--primary-color);
+}
+
+h4 {
+  font-size: var(--h4-font-size);
+  text-align: left;
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+h5 {
+  color: #595959;
+  padding: 0;
+  margin: 5px 0;
+  font-weight: 400;
+}
+
+h6 {
+  color: #595959;
+  font-weight: 400;
+  margin: 0 0 10px;
+  text-decoration: underline;
+  font-style: oblique;
+}
+
+section header {
+  left: 0;
+  top: 0;
+  padding: 24px 0 0 90px;
+  box-sizing: border-box;
+  text-align: left;
+  font-size: var(--header-font-size);
+  font-weight: 500;
+  color: var(--text-color);
+  width: 100%;
+  background-image: url("./images/corporate-sky/title_bg_left.png");
+  background-position: 60px bottom;
+  background-size: auto 50%;
+  background-repeat: no-repeat;
+}
+
+section header::after {
+  content: '';
+  width: 300px;
+  height: 32px;
+  vertical-align: top;
+  background-image: url("./images/corporate-sky/title_bg_right.png");
+  background-position: 40px center;
+  background-size: 100% auto;
+  background-repeat: no-repeat;
+  display: inline-block;
+  margin-left: -280px;
+}
+
+section header::before {
+  content: '';
+  height: 36px;
+  width: 300px;
+  position: absolute;
+  right: 40px;
+  top: 30px;
+  background-image: url("./images/corporate-sky/logo.png");
+  background-position: right top;
+  background-repeat: no-repeat;
+  background-size: auto 100%;
+}
+
+/* Table styles */
+table thead {
+  background-color: var(--primary-color);
+  color: var(--light-text-color);
+  line-height: 50px;
+}
+
+table tbody tr {
+  background-color: transparent;
+  color: #595959;
+}
+
+table tbody tr:nth-of-type(2n) {
+  background-color: rgba(166, 166, 166, 0.1);
+}
+
+table > tbody > tr:not(:last-child) > td {
+  min-width: 140px;
+  border-bottom: 1px solid #ddd;
+}
+
+/* Layout classes */
+section.horizontalImages p {
+  display: flex;
+  justify-content: center;
+}
+
+section.horizontalLayout {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Tag styles */
+section.gorgeousTag ul {
+  font-size: 23px;
+}
+
+section.gorgeousTag ul li {
+  color: #333;
+  line-height: 40px;
+  list-style: none;
+  padding-right: 20px;
+  margin-bottom: 20px;
+}
+
+section.gorgeousTag ul li strong {
+  background: linear-gradient(45deg, var(--secondary-color), var(--primary-color));
+  border-radius: 15px 0;
+  color: var(--light-text-color);
+  line-height: 42px;
+  display: inline-block;
+  min-width: 150px;
+  text-align: center;
+  box-shadow: 0 0 4px 3px rgba(0,112,192,0.2);
+  margin-right: 8px;
+}
+
+/* Content page */
+section.contentPage {
+  background: url("./images/corporate-sky/content_bg.png") no-repeat center, center var(--background-gradient);
+  background-size: 100% 100%;
+  padding-left: 80px;
+  padding-right: 80px;
+  position: relative;
+}
+
+section.contentPage::after {
+  font-size: 24px;
+  font-weight: bold;
+  background-image: url("./images/corporate-sky/footer_bg.png");
+  background-size: 240% 240%;
+  text-shadow: none;
+  color: var(--light-text-color);
+  text-align: right;
+}
+
+section.contentPage img {
+  margin: 5px;
+}
+
+section.contentPage footer {
+  color: var(--muted-text-color);
+  bottom: 10px;
+  font-size: var(--footer-font-size);
+  text-align: center;
+}
+
+section.contentPage footer a {
+  color: #ccc;
+  transition: all 0.3s;
+}
+
+section.contentPage footer a:hover {
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+/* Home page */
+section.homePage {
+  background-color: #E4F2FE;
+  background-image: url("./images/corporate-sky/home_bg.png");
+  background-size: 100% 100%;
+  padding-left: 160px;
+  padding-top: 130px;
+  justify-content: flex-start;
+  color: #666;
+  font-size: 18px;
+}
+
+section.homePage h1 {
+  background-image: linear-gradient(45deg, #0069f8, var(--primary-color));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 2px 2px 20px #4c98ff7a;
+  font-size: 100px;
+  margin: 30px 0 10px 0;
+  color: var(--secondary-color);
+}
+
+section.homePage strong {
+  text-align: center;
+  background-image: linear-gradient(170deg, var(--primary-color), #0069f8, var(--secondary-color));
+  color: var(--light-text-color);
+  padding: 0px 30px;
+  line-height: 60px;
+  border-radius: 12px;
+  display: inline-block;
+  box-shadow: 0 0 30px 10px #1673ed3f;
+  font-size: 26px;
+  margin-left: 20px;
+}
+
+section.homePage footer {
+  font-size: 22px;
+  text-align: right;
+  color: #b0b0b4;
+}
+
+/* Thanks page */
+section.thanksPage {
+  background-color: #E4F2FE;
+  background-image: url("./images/corporate-sky/thanks_bg.png");
+  background-position: right center;
+  background-repeat: no-repeat;
+  background-size: auto 100%;
+  padding-left: 120px;
+  padding-top: 0;
+  position: relative;
+}
+
+section.thanksPage footer {
+  font-size: 22px;
+  text-align: center;
+}
