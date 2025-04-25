@@ -226,7 +226,7 @@
         `;
 
         container.innerHTML = `
-            <h3 style="margin:0 0 10px;font-size:16px;">文章收集器</h3>
+            <h3 style="margin:0 0 10px;font-size:16px;">公众号链接收集器</h3>
             <p style="margin:0 0 10px;word-break:break-all;">公众号: <span id="account-name">${state.accountName}</span></p>
             <label style="display:block;margin-bottom:5px;font-size:14px;">起始日期(可选):</label>
             <input type="date" id="start-date" style="width:100%;margin-bottom:10px;padding:8px;box-sizing:border-box;">
