@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         下载即梦HD图片(webp/jpg)
 // @namespace    http://tampermonkey.net/
-// @version      1.6
+// @version      1.7
 // @description  Collect and download specific image URLs containing aigc_resize:2400:2400 and labeled as '超清' from the page, with option to convert webp to jpg
 // @match        https://jimeng.jianying.com/*
 // @grant        GM_download
@@ -23,6 +23,7 @@
         init() {
             this.createControlPanel();
             this.observeImages();
+            setTimeout(() => this.collectImages(), 2000); // 延迟2秒确保页面加载完成
         }
 
         decodeHTMLEntities(text) {
@@ -130,14 +131,14 @@
         collectImages() {
             this.collectedUrls = [];
 
-            // 查找所有图片容器
-            document.querySelectorAll('[class*="container-"]').forEach(container => {
+            // 新方法：查找所有图片容器
+            document.querySelectorAll('[class*="image-"]').forEach(container => {
                 // 获取图片元素
                 const imgElement = container.querySelector('img');
                 if (!imgElement) return;
 
                 // 检查是否为高清图片
-                const isHD = this.isHighDefinition();
+                const isHD = this.isHighDefinition(container);
 
                 // 如果是高清图片，收集图片 URL
                 if (isHD) {
@@ -156,17 +157,17 @@
         showDownloadDialog() {
             const dialog = document.createElement('div');
             dialog.style.cssText = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: white;
-        padding: 20px;
-        border-radius: 5px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-        z-index: 10002;
-        width: 250px; // 设置固定宽度
-    `;
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: white;
+                padding: 20px;
+                border-radius: 5px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+                z-index: 10002;
+                width: 250px;
+            `;
 
             const createInput = (type, placeholder, defaultValue) => {
                 const input = document.createElement('input');
@@ -175,7 +176,7 @@
                 input.value = defaultValue;
                 input.style.marginBottom = '10px';
                 input.style.width = '100%';
-                input.style.boxSizing = 'border-box'; // 确保padding不会增加总宽度
+                input.style.boxSizing = 'border-box';
                 return input;
             };
 
@@ -194,11 +195,10 @@
                 formatSelect.appendChild(option);
             });
 
-            // 添加单选框
             const cleanupCheckbox = document.createElement('input');
             cleanupCheckbox.type = 'checkbox';
             cleanupCheckbox.id = 'cleanupCheckbox';
-            cleanupCheckbox.checked = true; // 默认勾选
+            cleanupCheckbox.checked = true;
             cleanupCheckbox.style.marginRight = '5px';
 
             const cleanupLabel = document.createElement('label');
@@ -210,7 +210,7 @@
                 const startIndex = parseInt(startInput.value, 10) || 1;
                 const delay = parseInt(delayInput.value, 10) || 1000;
                 const format = formatSelect.value;
-                const cleanup = cleanupCheckbox.checked; // 获取单选框状态
+                const cleanup = cleanupCheckbox.checked;
                 dialog.remove();
                 this.downloadImages(prefix, startIndex, delay, format, cleanup);
             });
@@ -226,8 +226,8 @@
             dialog.appendChild(startInput);
             dialog.appendChild(delayInput);
             dialog.appendChild(formatSelect);
-            dialog.appendChild(cleanupCheckbox); // 添加单选框
-            dialog.appendChild(cleanupLabel); // 添加单选框标签
+            dialog.appendChild(cleanupCheckbox);
+            dialog.appendChild(cleanupLabel);
             dialog.appendChild(startDownloadBtn);
             dialog.appendChild(cancelBtn);
 
@@ -253,7 +253,7 @@
                     this.setButtonDisabled(this.downloadBtn, false);
                     this.showNotification(`全部 ${this.collectedUrls.length} 张图片下载完成`);
                     this.updateProgressIndicator(0, 1);
-                    if (cleanup) { // 根据单选框状态清理已收集的图片
+                    if (cleanup) {
                         this.collectedUrls = [];
                         this.updateDownloadButtonText();
                     }
@@ -335,14 +335,14 @@
                         mutation.addedNodes.forEach((node) => {
                             if (node.nodeType === Node.ELEMENT_NODE) {
                                 // 查找图片容器
-                                const containers = node.querySelectorAll('[class*="container-"]');
+                                const containers = node.querySelectorAll('[class*="image-"]');
                                 containers.forEach(container => {
                                     // 获取图片元素
-                                    const imgElement = this.findImageElement(container);
+                                    const imgElement = container.querySelector('img');
                                     if (!imgElement) return;
 
                                     // 检查是否为高清图片
-                                    const isHD = this.isHighDefinition();
+                                    const isHD = this.isHighDefinition(container);
 
                                     // 如果是高清图片，收集图片 URL
                                     if (isHD) {
@@ -363,48 +363,40 @@
             observer.observe(document.body, { childList: true, subtree: true });
         }
 
-        // 辅助函数：查找图片元素
-        findImageElement(container) {
-            const imgElement = container.querySelector('img');
-            return imgElement || null;
-        }
-
-        // 辅助函数：获取图片的真实 URL
-        getImageUrl(imgElement) {
-            if (imgElement && imgElement.src) {
-                return imgElement.src.split('?')[0]; // 去掉 URL 中的查询参数
-            }
-            return null;
-        }
-
-        // 辅助函数：判断是否为高清图片
-        isHighDefinition() {
-            // 1. 检查是否有“超清”标志
-            const metaRightElements = document.querySelectorAll('[class*="metaRight-"], [class*="metaRight_"]');
-            for (const metaRight of metaRightElements) {
-                if (metaRight.textContent.trim() === '超清') {
-                    return true; // 如果找到“超清”标志，直接返回 true
-                }
-            }
-
-            // 2. 如果没有找到标志，检查灰化的“超清”按钮
-            const editSections = document.querySelectorAll('[class^="group-"], [class^="topActionBar-"]');
-            for (const editSection of editSections) {
-                // 查找所有按钮
-                const buttons = editSection.querySelectorAll('[class^="optItem-"], [class^="mweb-button-"]');
-                for (const button of buttons) {
-                    // 检查按钮是否包含“超清”文本
-                    if (button.textContent.trim() === '超清') {
-                        // 动态匹配以 `disabled-` 开头的类名，判断按钮是否被禁用（灰化）
-                        const isDisabled = Array.from(button.classList).some(cls => cls.startsWith('disabled-'));
-                        if (isDisabled) {
-                            return true; // 如果按钮被禁用（灰化），返回 true
-                        }
+        // 改进的"超清"检测方法
+        isHighDefinition(container) {
+            // 方法1: 检查图片容器附近的"超清"文本
+            const parentElement = container.closest('[class*="container-"]');
+            if (parentElement) {
+                const textElements = parentElement.querySelectorAll('[class*="meta-"], [class*="text-"]');
+                for (const element of textElements) {
+                    if (element.textContent.trim() === '超清') {
+                        return true;
                     }
                 }
             }
 
-            return false; // 如果既没有找到标志，也没有找到禁用的按钮，返回 false
+            // 方法2: 检查整个文档中的"超清"按钮状态
+            const hdButtons = document.querySelectorAll('[class*="optItem-"], [class*="button-"]');
+            for (const button of hdButtons) {
+                if (button.textContent.trim() === '超清') {
+                    // 检查按钮是否被禁用
+                    const isDisabled = button.disabled ||
+                                     button.getAttribute('aria-disabled') === 'true' ||
+                                     button.classList.toString().includes('disabled');
+                    if (isDisabled) {
+                        return true;
+                    }
+                }
+            }
+
+            // 方法3: 检查图片URL是否包含高清标识
+            const imgElement = container.querySelector('img');
+            if (imgElement && imgElement.src) {
+                return imgElement.src.includes('aigc_resize:2400:2400');
+            }
+
+            return false;
         }
 
         makeDraggable(element, handle) {
