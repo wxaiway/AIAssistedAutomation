@@ -1,8 +1,8 @@
-// ==UserScript==
+﻿// ==UserScript==
 // @name         下载即梦HD图片(webp/jpg)
 // @namespace    http://tampermonkey.net/
 // @version      1.7
-// @description  Collect and download specific image URLs containing aigc_resize:2400:2400 and labeled as '超清' from the page, with option to convert webp to jpg
+// @description  Collect and download specific image URLs containing labeled as '超清' from the page, with option to convert webp to jpg
 // @match        https://jimeng.jianying.com/*
 // @grant        GM_download
 // @author       WxaiWay
@@ -365,35 +365,12 @@
 
         // 改进的"超清"检测方法
         isHighDefinition(container) {
-            // 方法1: 检查图片容器附近的"超清"文本
-            const parentElement = container.closest('[class*="container-"]');
-            if (parentElement) {
-                const textElements = parentElement.querySelectorAll('[class*="meta-"], [class*="text-"]');
-                for (const element of textElements) {
-                    if (element.textContent.trim() === '超清') {
-                        return true;
-                    }
+            // 检查图片容器附近的"超清"文本
+            const hdTags = document.querySelectorAll('[class*="meta-right-"]');
+            for (const tag of hdTags) {
+                if (tag.textContent.trim() === '超清') {
+                    return true;
                 }
-            }
-
-            // 方法2: 检查整个文档中的"超清"按钮状态
-            const hdButtons = document.querySelectorAll('[class*="optItem-"], [class*="button-"]');
-            for (const button of hdButtons) {
-                if (button.textContent.trim() === '超清') {
-                    // 检查按钮是否被禁用
-                    const isDisabled = button.disabled ||
-                                     button.getAttribute('aria-disabled') === 'true' ||
-                                     button.classList.toString().includes('disabled');
-                    if (isDisabled) {
-                        return true;
-                    }
-                }
-            }
-
-            // 方法3: 检查图片URL是否包含高清标识
-            const imgElement = container.querySelector('img');
-            if (imgElement && imgElement.src) {
-                return imgElement.src.includes('aigc_resize:2400:2400');
             }
 
             return false;
