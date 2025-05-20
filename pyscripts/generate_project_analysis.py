@@ -154,7 +154,7 @@ def export_project(directory, key_files, extensions, exclude_list, output_file):
 文件内容:
 {generate_file_contents(directory, key_files, extensions, exclude_list)}
 
-请根据上述信息和我的修改需求，提供详细的代码修改建议和优化方案。如果需要添加新文件或对现有文件进行大幅修改，请提供完整的代码。谢谢！
+请根据上述信息和我的修改需求，提供详细的代码修改建议和优化方案。如果需要添加新文件或对现有文件进行大幅修改，请提供修改后完整的代码。谢谢！
 """
 
     print(f"导出项目结构和内容到{output_file}")
