@@ -7,3 +7,5 @@ source manim_env/bin/activate
 pip install manim -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 manim -pql hanoi_tower.py HanoiTower
+manim -pql pythagorean_theorem.py PythagoreanTheorem
+manim -pql time_management.py TimeManagement

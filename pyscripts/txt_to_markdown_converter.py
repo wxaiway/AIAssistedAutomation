@@ -45,32 +45,51 @@ def parse_txt_to_md(txt_content):
             body = txt_content
 
     # 拆分Body内容
-    connections_pattern = r'connections[\.\s]*writing'
-    connections_match = re.search(connections_pattern, body, re.IGNORECASE)
+    connections_writing_art_pattern = r'connections[\.\s]*writing\sand\sart'
+    connections_writing_art_match = re.search(connections_writing_art_pattern, body, re.IGNORECASE)
     
-    if connections_match:
-        body_part = body[:connections_match.start()].strip()
-        rest_part = body[connections_match.end():].strip()
-
-        writing_social_studies_pattern = r'social\sstudies'
-        writing_social_studies_match = re.search(writing_social_studies_pattern, rest_part, re.IGNORECASE)
-
-        if writing_social_studies_match:
-            writing_part = rest_part[:writing_social_studies_match.start()].strip()
-            social_studies_part = rest_part[writing_social_studies_match.end():].strip()
-        else:
-            writing_part = rest_part
-            social_studies_part = ''
-    else:
-        body_part = body
-        writing_part = ''
+    if connections_writing_art_match:
+        body_part = body[:connections_writing_art_match.start()].strip()
+        rest_part = body[connections_writing_art_match.end():].strip()
+        writing_part = rest_part
         social_studies_part = ''
+        social_studies_title = "### Writing and Art"
+    else:
+        connections_pattern = r'connections[\.\s]*writing'
+        connections_match = re.search(connections_pattern, body, re.IGNORECASE)
+        
+        if connections_match:
+            body_part = body[:connections_match.start()].strip()
+            rest_part = body[connections_match.end():].strip()
 
+            writing_social_studies_pattern = r'Social\sstudies\sand\sart|social\sstudies'
+            writing_social_studies_match = re.search(writing_social_studies_pattern, rest_part, re.IGNORECASE)
+
+            if writing_social_studies_match:
+                writing_part = rest_part[:writing_social_studies_match.start()].strip()
+                # 根据匹配的内容决定标题
+                if re.search(r'Social\sstudies\sand\sart', writing_social_studies_match.group(0), re.IGNORECASE):
+                    social_studies_part = rest_part[writing_social_studies_match.end():].strip()
+                    social_studies_title = "### Social Studies and Art"
+                else:
+                    social_studies_part = rest_part[writing_social_studies_match.end():].strip()
+                    social_studies_title = "### Social Studies"
+            else:
+                writing_part = rest_part
+                social_studies_part = ''
+                social_studies_title = "### Social Studies"
+        else:
+            body_part = body
+            writing_part = ''
+            social_studies_part = ''
+
+    # 修改生成Markdown内容的逻辑
     md_content = f"## Title\n\n{title or ''}\n\n"
     md_content += f"## Author\n\nWritten by {author}\n\n" if author else "## Author\n\n\n"
     md_content += f"## Focus Question\n\n{focus_question or ''}\n\n"
     md_content += f"## Body\n\n{body_part}\n\n" if body_part else ""
-    md_content += f"## Connections\n\n### Writing\n\n{writing_part}\n\n" if writing_part else ""
+    md_content += f"## Connections\n\n"
+    md_content += f"### Writing and Art\n\n{writing_part}\n\n" if writing_part else ""
     md_content += f"### Social Studies\n\n{social_studies_part}\n\n" if social_studies_part else ""
 
     return md_content
