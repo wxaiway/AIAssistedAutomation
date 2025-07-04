@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         下载即梦HD图片(webp/jpg)
 // @namespace    http://tampermonkey.net/
-// @version      1.7
+// @version      1.8
 // @description  Collect and download specific image URLs containing labeled as '超清' from the page, with option to convert webp to jpg
 // @match        https://jimeng.jianying.com/*
 // @grant        GM_download
@@ -23,7 +23,11 @@
         init() {
             this.createControlPanel();
             this.observeImages();
-            setTimeout(() => this.collectImages(), 2000); // 延迟2秒确保页面加载完成
+            // 增加多次延迟检测，确保能捕获到懒加载的图片
+            setTimeout(() => this.autoCollectImages(), 1000);
+            setTimeout(() => this.autoCollectImages(), 3000);
+            setTimeout(() => this.autoCollectImages(), 5000);
+            setTimeout(() => this.autoCollectImages(), 10000);
         }
 
         decodeHTMLEntities(text) {
@@ -41,6 +45,47 @@
                 }
             }
             return null;
+        }
+
+        // 新增：检查图片是否可见和已加载
+        isImageVisible(img) {
+            // 检查图片是否在视口内
+            const rect = img.getBoundingClientRect();
+            const isInViewport = rect.top >= 0 && rect.left >= 0 && 
+                                rect.bottom <= window.innerHeight && 
+                                rect.right <= window.innerWidth;
+            
+            // 检查图片是否已加载
+            const isLoaded = img.complete && img.naturalHeight !== 0;
+            
+            // 检查父元素是否可见
+            const isParentVisible = !img.closest('[style*="display: none"], [style*="visibility: hidden"]');
+            
+            return isInViewport && isLoaded && isParentVisible;
+        }
+
+        // 新增：强制加载图片
+        forceLoadImage(img) {
+            if (img.src && !img.complete) {
+                // 创建一个新的Image对象来预加载
+                const tempImg = new Image();
+                tempImg.onload = () => {
+                    console.log('图片预加载完成:', img.src);
+                    // 重新检查是否可以收集
+                    this.checkAndCollectImage(img);
+                };
+                tempImg.src = img.src;
+            }
+        }
+
+        // 新增：检查并收集单个图片
+        checkAndCollectImage(imgElement) {
+            let url = this.getImageUrl(imgElement);
+            if (url && !this.collectedUrls.some(item => item.url === url)) {
+                this.collectedUrls.push({ url: url, element: imgElement });
+                console.log('收集图片URL:', url);
+                this.updateDownloadButtonText();
+            }
         }
 
         createControlPanel() {
@@ -129,29 +174,75 @@
         }
 
         collectImages() {
+            console.log('开始收集图片...');
+            
+            // 清理原来的收集列表
             this.collectedUrls = [];
-
-            // 新方法：查找所有图片容器
-            document.querySelectorAll('[class*="image-"]').forEach(container => {
-                // 获取图片元素
-                const imgElement = container.querySelector('img');
-                if (!imgElement) return;
-
-                // 检查是否为高清图片
-                const isHD = this.isHighDefinition(container);
-
-                // 如果是高清图片，收集图片 URL
-                if (isHD) {
-                    let url = this.getImageUrl(imgElement);
-                    if (url && !this.collectedUrls.some(item => item.url === url)) {
+            
+            // 查找所有图片元素
+            const allImages = document.querySelectorAll('img');
+            console.log('找到图片数量:', allImages.length);
+            
+            let collectedCount = 0;
+            
+            allImages.forEach((imgElement, index) => {
+                // 检查图片URL是否包含aigc_resize:2400:2400
+                let url = this.getImageUrl(imgElement);
+                if (url) {
+                    console.log(`图片 ${index + 1} 符合条件:`, url);
+                    if (!this.collectedUrls.some(item => item.url === url)) {
                         this.collectedUrls.push({ url: url, element: imgElement });
+                        collectedCount++;
                         console.log('收集图片URL:', url);
+                    }
+                } else {
+                    // 如果图片还没有src，尝试强制加载
+                    if (!imgElement.src && imgElement.dataset.src) {
+                        imgElement.src = imgElement.dataset.src;
+                        setTimeout(() => this.checkAndCollectImage(imgElement), 100);
                     }
                 }
             });
 
+            console.log(`本次收集到 ${collectedCount} 个新图片`);
             this.showNotification(`已重新收集 ${this.collectedUrls.length} 个符合条件的图片URL`);
             this.updateDownloadButtonText();
+        }
+
+        // 新增：自动检测图片（不清空原有列表）
+        autoCollectImages() {
+            console.log('开始自动检测图片...');
+            
+            // 查找所有图片元素
+            const allImages = document.querySelectorAll('img');
+            console.log('找到图片数量:', allImages.length);
+            
+            let collectedCount = 0;
+            
+            allImages.forEach((imgElement, index) => {
+                // 检查图片URL是否包含aigc_resize:2400:2400
+                let url = this.getImageUrl(imgElement);
+                if (url) {
+                    console.log(`图片 ${index + 1} 符合条件:`, url);
+                    if (!this.collectedUrls.some(item => item.url === url)) {
+                        this.collectedUrls.push({ url: url, element: imgElement });
+                        collectedCount++;
+                        console.log('收集新图片URL:', url);
+                    }
+                } else {
+                    // 如果图片还没有src，尝试强制加载
+                    if (!imgElement.src && imgElement.dataset.src) {
+                        imgElement.src = imgElement.dataset.src;
+                        setTimeout(() => this.checkAndCollectImage(imgElement), 100);
+                    }
+                }
+            });
+
+            if (collectedCount > 0) {
+                console.log(`自动检测到 ${collectedCount} 个新图片`);
+                this.showNotification(`自动检测到 ${collectedCount} 个新图片，总计 ${this.collectedUrls.length} 个`);
+                this.updateDownloadButtonText();
+            }
         }
 
         showDownloadDialog() {
@@ -329,51 +420,79 @@
         }
 
         observeImages() {
+            // 创建更强大的观察器
             const observer = new MutationObserver((mutations) => {
+                let hasNewImages = false;
+                
                 mutations.forEach((mutation) => {
                     if (mutation.type === 'childList') {
                         mutation.addedNodes.forEach((node) => {
                             if (node.nodeType === Node.ELEMENT_NODE) {
-                                // 查找图片容器
-                                const containers = node.querySelectorAll('[class*="image-"]');
-                                containers.forEach(container => {
-                                    // 获取图片元素
-                                    const imgElement = container.querySelector('img');
-                                    if (!imgElement) return;
-
-                                    // 检查是否为高清图片
-                                    const isHD = this.isHighDefinition(container);
-
-                                    // 如果是高清图片，收集图片 URL
-                                    if (isHD) {
+                                // 查找新添加的图片元素
+                                const imgElements = node.querySelectorAll('img');
+                                if (imgElements.length > 0) {
+                                    hasNewImages = true;
+                                    imgElements.forEach(imgElement => {
+                                        console.log('检测到新图片元素:', imgElement);
+                                        // 检查图片URL是否包含aigc_resize:2400:2400
                                         let url = this.getImageUrl(imgElement);
                                         if (url && !this.collectedUrls.some(item => item.url === url)) {
                                             this.collectedUrls.push({ url: url, element: imgElement });
                                             console.log('收集新加载图片URL:', url);
                                             this.updateDownloadButtonText();
+                                        } else if (!url) {
+                                            // 如果图片还没有src，延迟检查
+                                            setTimeout(() => this.checkAndCollectImage(imgElement), 500);
                                         }
-                                    }
-                                });
+                                    });
+                                }
+                                
+                                // 如果节点本身就是图片
+                                if (node.tagName === 'IMG') {
+                                    hasNewImages = true;
+                                    console.log('检测到新图片节点:', node);
+                                    setTimeout(() => this.checkAndCollectImage(node), 500);
+                                }
                             }
                         });
                     }
+                    
+                    // 监听属性变化（比如src属性变化）
+                    if (mutation.type === 'attributes' && mutation.attributeName === 'src') {
+                        const imgElement = mutation.target;
+                        if (imgElement.tagName === 'IMG') {
+                            hasNewImages = true;
+                            console.log('检测到图片src变化:', imgElement.src);
+                            setTimeout(() => this.checkAndCollectImage(imgElement), 100);
+                        }
+                    }
                 });
+                
+                // 如果有新图片，延迟自动检测
+                if (hasNewImages) {
+                    setTimeout(() => this.autoCollectImages(), 1000);
+                }
             });
 
-            observer.observe(document.body, { childList: true, subtree: true });
-        }
-
-        // 改进的"超清"检测方法
-        isHighDefinition(container) {
-            // 检查图片容器附近的"超清"文本
-            const hdTags = document.querySelectorAll('[class*="meta-right-"]');
-            for (const tag of hdTags) {
-                if (tag.textContent.trim() === '超清') {
-                    return true;
+            // 观察整个文档的变化
+            observer.observe(document.body, { 
+                childList: true, 
+                subtree: true,
+                attributes: true,
+                attributeFilter: ['src', 'style', 'class']
+            });
+            
+            // 监听滚动事件，触发懒加载图片
+            window.addEventListener('scroll', () => {
+                setTimeout(() => this.autoCollectImages(), 500);
+            });
+            
+            // 监听点击事件，可能触发图片加载
+            document.addEventListener('click', (e) => {
+                if (e.target.tagName === 'IMG' || e.target.closest('img')) {
+                    setTimeout(() => this.autoCollectImages(), 300);
                 }
-            }
-
-            return false;
+            });
         }
 
         makeDraggable(element, handle) {
